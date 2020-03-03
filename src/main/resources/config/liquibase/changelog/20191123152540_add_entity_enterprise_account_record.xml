@@ -11,7 +11,7 @@
     <property name="floatType" value="float4"
               dbms="postgresql"/>
 
-    <changeSet id="20191123152540" author="bitinvestic">
+    <changeSet id="20191123152540" author="acrosafe">
         <createTable tableName="enterprise_account_record">
             <column name="id" type="varchar(255)">
                 <constraints primaryKey="true" nullable="false"/>
