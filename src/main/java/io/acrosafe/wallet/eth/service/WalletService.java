@@ -28,6 +28,9 @@ import java.util.Base64;
 
 import javax.annotation.PostConstruct;
 
+import io.acrosafe.wallet.core.eth.exception.WalletNotFoundException;
+import io.acrosafe.wallet.eth.domain.AddressRecord;
+import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,11 +82,35 @@ public class WalletService
     @Autowired
     private WalletRecordRepository walletRecordRepository;
 
+    @Autowired
+    private AddressRecordRepository addressRecordRepository;
+
     private boolean isReady;
 
     @PostConstruct
     public void initialize()
     {
+    }
+
+    @Transactional
+    public String createAddress(String walletId)
+            throws WalletNotFoundException, ContractCreationException
+    {
+        final ETHWallet wallet = this.walletCacheService.getWallet(walletId);
+
+        final String id = IDGenerator.randomUUID().toString();
+        AddressRecord addressRecord = new AddressRecord();
+        addressRecord.setId(id);
+        addressRecord.setWalletId(walletId);
+        addressRecord.setCreatedDate(Instant.now());
+        this.addressRecordRepository.save(addressRecord);
+
+        logger.info("new address record {} is created.", id);
+        this.blockChainService.deployAddressContract(id,
+                wallet.getEnterpriseAccount().getCredentials(this.applicationProperties.getPassphrase()),
+                wallet.getOwnerAccount().getAddress(), walletId);
+
+        return id;
     }
 
     @Transactional

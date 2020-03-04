@@ -13,5 +13,7 @@
              relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/20200123153146_populate_entity_erc20_token_record_table_dev.xml"
              relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20191219144800_add_entity_address_record.xml"
+             relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
