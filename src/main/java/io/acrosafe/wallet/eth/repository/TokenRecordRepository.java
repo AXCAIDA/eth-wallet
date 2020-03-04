@@ -21,39 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.acrosafe.wallet.eth.config;
+package io.acrosafe.wallet.eth.repository;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
+import io.acrosafe.wallet.eth.domain.TokenRecord;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import io.acrosafe.wallet.core.eth.BlockChainNetwork;
-import io.acrosafe.wallet.core.eth.SeedGenerator;
-
-@Configuration
-public class BlockChainConfiguration
+public interface TokenRecordRepository extends JpaRepository<TokenRecord, String>
 {
-    private static final Long DEFAULT_SERVICE_TIMEOUT = 600L;
-
-    private final Environment env;
-
-    public BlockChainConfiguration(Environment env)
-    {
-        this.env = env;
-    }
-
-    @Bean
-    public SeedGenerator seedGenerator()
-    {
-        return new SeedGenerator();
-    }
-
-    @Bean
-    public BlockChainNetwork blockChainNetwork()
-    {
-        String serviceUrl = env.getProperty("application.service-url");
-        Long serviceTimeout = env.getProperty("application.service-timeout", Long.class, DEFAULT_SERVICE_TIMEOUT);
-        BlockChainNetwork blockChainNetwork = new BlockChainNetwork(serviceUrl, serviceTimeout);
-        return blockChainNetwork;
-    }
 }

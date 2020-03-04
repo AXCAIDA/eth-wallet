@@ -21,37 +21,59 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.acrosafe.wallet.eth.web.rest.response;
+package io.acrosafe.wallet.eth.exception;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class GetBalanceResponse extends Response
+public class InvalidPassphraseException extends Exception
 {
-    @JsonProperty("balance")
-    private String balance;
-
-    @JsonProperty("balance_in_wei")
-    private String balanceInWei;
-
-    public String getBalance()
+    /**
+     * Constructs new InvalidPassphraseException instance.
+     */
+    public InvalidPassphraseException()
     {
-        return balance;
+        super();
     }
 
-    public void setBalance(String balance)
+    /**
+     * Constructs new InvalidPassphraseException.
+     * 
+     * @param message
+     * @param cause
+     * @param enableSuppression
+     * @param writableStackTrace
+     */
+    public InvalidPassphraseException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace)
     {
-        this.balance = balance;
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public String getBalanceInWei()
+    /**
+     * Constructs new InvalidPassphraseException.
+     * 
+     * @param message
+     * @param cause
+     */
+    public InvalidPassphraseException(String message, Throwable cause)
     {
-        return balanceInWei;
+        super(message, cause);
     }
 
-    public void setBalanceInWei(String balanceInWei)
+    /**
+     * Constructs new InvalidPassphraseException.
+     * 
+     * @param message
+     */
+    public InvalidPassphraseException(String message)
     {
-        this.balanceInWei = balanceInWei;
+        super(message);
+    }
+
+    /**
+     * Constructs new InvalidPassphraseException.
+     * 
+     * @param cause
+     */
+    public InvalidPassphraseException(Throwable cause)
+    {
+        super(cause);
     }
 }

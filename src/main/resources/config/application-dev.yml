@@ -22,6 +22,8 @@ spring:
     hikari:
       auto-commit: false
       maximum-pool-size: 3
+  liquibase:
+    change-log: classpath:config/liquibase/master-dev.xml
 
 server:
   port: 9100

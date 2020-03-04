@@ -38,8 +38,6 @@ spring:
         jdbc:
           lob:
             non_contextual_creation: true
-  liquibase:
-    change-log: classpath:config/liquibase/master.xml
 
 server:
   port: 9100

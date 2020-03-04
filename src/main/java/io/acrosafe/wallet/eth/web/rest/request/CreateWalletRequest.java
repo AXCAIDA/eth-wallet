@@ -24,8 +24,9 @@
 package io.acrosafe.wallet.eth.web.rest.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.acrosafe.wallet.core.eth.Passphrase;
 
-public class CreateEnterpriseAccountRequest
+public class CreateWalletRequest
 {
     @JsonProperty("symbol")
     private String symbol;
@@ -33,8 +34,14 @@ public class CreateEnterpriseAccountRequest
     @JsonProperty("name")
     private String name;
 
+    @JsonProperty("passphrase")
+    private Passphrase passphrase;
+
     @JsonProperty("label")
     private String label;
+
+    @JsonProperty("enterprise_id")
+    private String enterpriseId;
 
     public String getSymbol()
     {
@@ -65,4 +72,25 @@ public class CreateEnterpriseAccountRequest
     {
         this.label = label;
     }
+
+    public Passphrase getPassphrase()
+    {
+        return passphrase;
+    }
+
+    public void setPassphrase(String passphrase)
+    {
+        this.passphrase = new Passphrase(passphrase);
+    }
+
+    public String getEnterpriseId()
+    {
+        return enterpriseId;
+    }
+
+    public void setEnterpriseId(String enterpriseId)
+    {
+        this.enterpriseId = enterpriseId;
+    }
+
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20200123153146" author="bitinvestic">
+        <insert tableName="token_record">
+            <column name="symbol" value="MEOWZ"/>
+            <column name="name" value="MEOWZ Coin"/>
+            <column name="decimals" value="8"/>
+            <column name="enabled" value="true"/>
+            <column name="contract_address" value="0xaf636594a69a68c6acc28bb5bedd29abd8fb5dbe"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
