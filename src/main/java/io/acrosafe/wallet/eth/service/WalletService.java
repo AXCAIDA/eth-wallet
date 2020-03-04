@@ -23,8 +23,10 @@
  */
 package io.acrosafe.wallet.eth.service;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
@@ -90,6 +92,8 @@ public class WalletService
     @PostConstruct
     public void initialize()
     {
+        Map<String, BigInteger> map = this.blockChainService.getBalances("0xd2597e8c683a526a39116e7496a2220712115154", this.walletCacheService.getTokens());
+        map.forEach((k, v) -> System.out.println((k + ":" + v)));
     }
 
     @Transactional
@@ -198,5 +202,11 @@ public class WalletService
                 enterpriseAccount.getCredentials(this.applicationProperties.getPassphrase()), wallet.getSigningKeys());
 
         return walletRecord;
+    }
+
+    public Map<String, BigInteger> getBalances(String walletId) throws WalletNotFoundException {
+        final ETHWallet wallet = this.walletCacheService.getWallet(walletId);
+
+        return this.blockChainService.getBalances(wallet.getAddress(), this.walletCacheService.getTokens());
     }
 }
