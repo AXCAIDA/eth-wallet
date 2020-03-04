@@ -21,20 +21,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.acrosafe.wallet.eth.web.rest.request;
+package io.acrosafe.wallet.eth.web.rest.response;
 
+import java.time.Instant;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class CreateEnterpriseAccountRequest
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class CreateWalletResponse extends Response
 {
     @JsonProperty("symbol")
     private String symbol;
+
+    @JsonProperty("id")
+    private String id;
 
     @JsonProperty("name")
     private String name;
 
     @JsonProperty("label")
     private String label;
+
+    @JsonProperty("enabled")
+    private Boolean enabled;
+
+    @JsonProperty("created_date")
+    private Instant createdDate;
 
     public String getSymbol()
     {
@@ -44,6 +57,16 @@ public class CreateEnterpriseAccountRequest
     public void setSymbol(String symbol)
     {
         this.symbol = symbol;
+    }
+
+    public String getId()
+    {
+        return id;
+    }
+
+    public void setId(String id)
+    {
+        this.id = id;
     }
 
     public String getName()
@@ -64,5 +87,25 @@ public class CreateEnterpriseAccountRequest
     public void setLabel(String label)
     {
         this.label = label;
+    }
+
+    public Boolean getEnabled()
+    {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled)
+    {
+        this.enabled = enabled;
+    }
+
+    public Instant getCreatedDate()
+    {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Instant createdDate)
+    {
+        this.createdDate = createdDate;
     }
 }

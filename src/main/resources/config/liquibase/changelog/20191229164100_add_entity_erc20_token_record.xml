@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+	<property name="now" value="current_timestamp"
+		dbms="postgresql" />
+
+	<changeSet id="20191229164100" author="acrosafe">
+		<createTable tableName="token_record">
+			<column name="symbol" type="varchar(10)">
+				<constraints primaryKey="true" nullable="false" />
+			</column>
+			<column name="name" type="varchar(255)">
+				<constraints nullable="false" />
+			</column>
+			<column name="enabled" type="boolean">
+				<constraints nullable="false"/>
+			</column>
+			<column name="decimals" type="integer">
+				<constraints nullable="false"/>
+			</column>
+			<column name="contract_address" type="varchar(255)">
+				<constraints nullable="false" />
+			</column>
+			<column name="created_date" type="timestamp"
+				defaultValueDate="${now}">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+	</changeSet>
+</databaseChangeLog>

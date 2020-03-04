@@ -21,37 +21,59 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.acrosafe.wallet.eth.web.rest.response;
+package io.acrosafe.wallet.eth.exception;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class GetBalanceResponse extends Response
+public class InvalidWalletNameException extends Exception
 {
-    @JsonProperty("balance")
-    private String balance;
-
-    @JsonProperty("balance_in_wei")
-    private String balanceInWei;
-
-    public String getBalance()
+    /**
+     * Constructs new InvalidWalletNameException instance.
+     */
+    public InvalidWalletNameException()
     {
-        return balance;
+        super();
     }
 
-    public void setBalance(String balance)
+    /**
+     * Constructs new InvalidWalletNameException.
+     *
+     * @param message
+     * @param cause
+     * @param enableSuppression
+     * @param writableStackTrace
+     */
+    public InvalidWalletNameException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace)
     {
-        this.balance = balance;
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public String getBalanceInWei()
+    /**
+     * Constructs new InvalidWalletNameException.
+     *
+     * @param message
+     * @param cause
+     */
+    public InvalidWalletNameException(String message, Throwable cause)
     {
-        return balanceInWei;
+        super(message, cause);
     }
 
-    public void setBalanceInWei(String balanceInWei)
+    /**
+     * Constructs new InvalidWalletNameException.
+     *
+     * @param message
+     */
+    public InvalidWalletNameException(String message)
     {
-        this.balanceInWei = balanceInWei;
+        super(message);
+    }
+
+    /**
+     * Constructs new InvalidWalletNameException.
+     *
+     * @param cause
+     */
+    public InvalidWalletNameException(Throwable cause)
+    {
+        super(cause);
     }
 }

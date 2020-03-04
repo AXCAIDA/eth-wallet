@@ -36,28 +36,13 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
 
 @Entity
-@Table(name = "enterprise_account_record")
+@Table(name = "wallet_record")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class EnterpriseAccountRecord implements Serializable
+public class WalletRecord implements Serializable
 {
     @Id
     @Column(name = "id", nullable = false)
     private String id;
-
-    @Column(name = "seed", nullable = false)
-    private String seed;
-
-    @Column(name = "address", nullable = false)
-    private String address;
-
-    @Column(name = "label", nullable = true)
-    private String label;
-
-    @Column(name = "spec", nullable = false)
-    private String spec;
-
-    @Column(name = "salt", nullable = false)
-    private String salt;
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
@@ -65,6 +50,36 @@ public class EnterpriseAccountRecord implements Serializable
     @CreatedDate
     @Column(name = "created_date", nullable = false)
     private Instant createdDate = Instant.now();
+
+    @Column(name = "wallet_address", nullable = true)
+    private String address;
+
+    @Column(name = "enterprise_account_id", nullable = false)
+    private String enterpriseAccountId;
+
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "label", nullable = true)
+    private String label;
+
+    @Column(name = "signer_seed", nullable = false)
+    private String signerSeed;
+
+    @Column(name = "signer_address", nullable = false)
+    private String signerAddress;
+
+    @Column(name = "backup_seed", nullable = false)
+    private String backupSeed;
+
+    @Column(name = "backup_address", nullable = false)
+    private String backupAddress;
+
+    @Column(name = "spec", nullable = false)
+    private String spec;
+
+    @Column(name = "salt", nullable = false)
+    private String salt;
 
     public String getId()
     {
@@ -74,16 +89,6 @@ public class EnterpriseAccountRecord implements Serializable
     public void setId(String id)
     {
         this.id = id;
-    }
-
-    public Instant getCreatedDate()
-    {
-        return createdDate;
-    }
-
-    public void setCreatedDate(Instant createdDate)
-    {
-        this.createdDate = createdDate;
     }
 
     public boolean isEnabled()
@@ -96,6 +101,16 @@ public class EnterpriseAccountRecord implements Serializable
         this.enabled = enabled;
     }
 
+    public Instant getCreatedDate()
+    {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Instant createdDate)
+    {
+        this.createdDate = createdDate;
+    }
+
     public String getAddress()
     {
         return address;
@@ -104,6 +119,26 @@ public class EnterpriseAccountRecord implements Serializable
     public void setAddress(String address)
     {
         this.address = address;
+    }
+
+    public String getEnterpriseAccountId()
+    {
+        return enterpriseAccountId;
+    }
+
+    public void setEnterpriseAccountId(String enterpriseAccountId)
+    {
+        this.enterpriseAccountId = enterpriseAccountId;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public void setName(String name)
+    {
+        this.name = name;
     }
 
     public String getLabel()
@@ -116,6 +151,46 @@ public class EnterpriseAccountRecord implements Serializable
         this.label = label;
     }
 
+    public String getSignerSeed()
+    {
+        return signerSeed;
+    }
+
+    public void setSignerSeed(String signerSeed)
+    {
+        this.signerSeed = signerSeed;
+    }
+
+    public String getSignerAddress()
+    {
+        return signerAddress;
+    }
+
+    public void setSignerAddress(String signerAddress)
+    {
+        this.signerAddress = signerAddress;
+    }
+
+    public String getBackupSeed()
+    {
+        return backupSeed;
+    }
+
+    public void setBackupSeed(String backupSeed)
+    {
+        this.backupSeed = backupSeed;
+    }
+
+    public String getBackupAddress()
+    {
+        return backupAddress;
+    }
+
+    public void setBackupAddress(String backupAddress)
+    {
+        this.backupAddress = backupAddress;
+    }
+
     public String getSpec()
     {
         return spec;
@@ -124,16 +199,6 @@ public class EnterpriseAccountRecord implements Serializable
     public void setSpec(String spec)
     {
         this.spec = spec;
-    }
-
-    public String getSeed()
-    {
-        return seed;
-    }
-
-    public void setSeed(String seed)
-    {
-        this.seed = seed;
     }
 
     public String getSalt()
