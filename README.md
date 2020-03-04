@@ -1,6 +1,9 @@
 # eth-wallet
 Spring Boot based 2-of-3 multisig wallet implementation for Ether. Now 35 kind of ERC20 tokens are supported. for more detail, check https://www.acrosafe.io, If you find any problem, please open an issue.
 
+# Wallet Smart Contract
+For security reasons, We decided to use bitgo eth-multisig-v2 as the wallet smart contract. It has been tested and proved by real world. https://github.com/BitGo/eth-multisig-v2. But we are adding more contents to support ERC721 tokens. 
+
 # Enterprise Account
 Note: Acrosafe ETH multisig wallet uses enterprise account to create wallet and address contract. Also use it to pay transaction fees. The concept is same as BitGo enterprise account. You need to fund enterprise account before you create wallet/address/transaction.
 
