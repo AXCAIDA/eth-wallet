@@ -25,10 +25,9 @@ package io.acrosafe.wallet.eth.service;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
-import io.acrosafe.wallet.eth.contract.InternalAddress;
-import io.acrosafe.wallet.eth.domain.AddressRecord;
-import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +40,11 @@ import org.web3j.tx.gas.StaticGasProvider;
 
 import io.acrosafe.wallet.core.eth.BlockChainNetwork;
 import io.acrosafe.wallet.core.eth.ETHWallet;
+import io.acrosafe.wallet.core.eth.Token;
 import io.acrosafe.wallet.core.eth.exception.ContractCreationException;
-import io.acrosafe.wallet.eth.contract.Wallet;
+import io.acrosafe.wallet.eth.domain.AddressRecord;
 import io.acrosafe.wallet.eth.domain.WalletRecord;
+import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
 import io.acrosafe.wallet.eth.repository.WalletRecordRepository;
 
 @Service
@@ -69,23 +70,27 @@ public class BlockChainService
         return blockChainNetwork.getETHBalance(address);
     }
 
+    public synchronized Map<String, BigInteger> getBalances(String walletAddress, List<Token> tokens)
+    {
+        return blockChainNetwork.getBalance(walletAddress, tokens);
+    }
+
     @Async
     public synchronized void deployAddressContract(String addressId, Credentials credentials, String ownerAccountAddress,
-                                                   String walletId) throws ContractCreationException
+            String walletId) throws ContractCreationException
     {
+        // TODO: remove when gas/limit model is done.
         ContractGasProvider contractGasProvider =
                 new StaticGasProvider(BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
 
         try
         {
-            InternalAddress contract = InternalAddress.deploy(this.blockChainNetwork.getWeb3j(), credentials, contractGasProvider).send();
-            contract.changeParent(ownerAccountAddress).send();
-            if (contract.isValid())
+            String contractAddress = this.blockChainNetwork.deployAddressContract(credentials, BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
+            if (!StringUtils.isEmpty(contractAddress))
             {
                 AddressRecord record = this.addressRecordRepository.findById(addressId).orElse(null);
                 if (record != null)
                 {
-                    final String contractAddress = contract.getContractAddress();
                     record.setAddress(contractAddress);
                     this.addressRecordRepository.save(record);
 
@@ -115,23 +120,21 @@ public class BlockChainService
     public synchronized void deployWalletContract(ETHWallet multisigWallet, String walletId, Credentials credentials,
             List<String> signingKeys) throws ContractCreationException
     {
-        ContractGasProvider contractGasProvider =
-                new StaticGasProvider(BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
-
         try
         {
-            Wallet contract =
-                    Wallet.deploy(this.blockChainNetwork.getWeb3j(), credentials, contractGasProvider, signingKeys).send();
-            if (contract.isValid())
+            String contractAddress = this.blockChainNetwork.deployWalletContract(credentials, signingKeys,
+                    BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
+
+            if (!StringUtils.isEmpty(contractAddress))
             {
                 WalletRecord record = walletRecordRepository.findById(walletId).orElse(null);
                 if (record != null)
                 {
-                    final String contractAddress = contract.getContractAddress();
                     record.setAddress(contractAddress);
                     this.walletRecordRepository.save(record);
 
                     multisigWallet.setReady(true);
+                    multisigWallet.setAddress(contractAddress);
                     this.walletCacheService.addWalletToCache(walletId, multisigWallet);
                     logger.info("wallet {} has been deployed to blockchain and persisted into DB. contract address = {}",
                             walletId, contractAddress);
@@ -144,7 +147,8 @@ public class BlockChainService
             }
             else
             {
-                throw new ContractCreationException("wallet contract is not valid.");
+                // this is almost impossible
+                logger.warn("failed to find wallet {} in DB.", walletId);
             }
         }
         catch (Throwable t)

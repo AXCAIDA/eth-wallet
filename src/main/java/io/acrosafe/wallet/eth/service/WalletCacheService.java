@@ -23,6 +23,7 @@
  */
 package io.acrosafe.wallet.eth.service;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -31,20 +32,21 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
 
-import io.acrosafe.wallet.core.eth.ETHAccount;
-import io.acrosafe.wallet.core.eth.exception.AccountNotFoundException;
-import io.acrosafe.wallet.core.eth.exception.TokenNotSupportedException;
-import io.acrosafe.wallet.core.eth.exception.WalletNotFoundException;
-import io.acrosafe.wallet.eth.domain.WalletRecord;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import io.acrosafe.wallet.core.eth.ETHAccount;
 import io.acrosafe.wallet.core.eth.ETHWallet;
 import io.acrosafe.wallet.core.eth.Token;
+import io.acrosafe.wallet.core.eth.exception.AccountNotFoundException;
+import io.acrosafe.wallet.core.eth.exception.TokenNotSupportedException;
+import io.acrosafe.wallet.core.eth.exception.WalletNotFoundException;
 import io.acrosafe.wallet.eth.config.ApplicationProperties;
 import io.acrosafe.wallet.eth.domain.TokenRecord;
+import io.acrosafe.wallet.eth.domain.WalletRecord;
 import io.acrosafe.wallet.eth.repository.TokenRecordRepository;
 import io.acrosafe.wallet.eth.repository.WalletRecordRepository;
 
@@ -110,6 +112,11 @@ public class WalletCacheService
         return token;
     }
 
+    public List<Token> getTokens()
+    {
+        return new ArrayList(tokens.values());
+    }
+
     public void updateWalletStatus(String walletId, boolean isReady) throws WalletNotFoundException
     {
         ETHWallet wallet = getWallet(walletId);
@@ -159,8 +166,13 @@ public class WalletCacheService
 
                 ETHWallet wallet = new ETHWallet(enterpriseAccount, signerAccount, backupSignerAccount);
 
-                logger.info("adding wallet {} to cache.", walletRecord.getId());
-                this.wallets.put(walletRecord.getId(), wallet);
+                String contractAddress = walletRecord.getAddress();
+                if (!StringUtils.isEmpty(contractAddress))
+                {
+                    wallet.setAddress(walletRecord.getAddress());
+                    logger.info("adding wallet {} to cache. address = {}", walletRecord.getId(), walletRecord.getAddress());
+                    this.wallets.put(walletRecord.getId(), wallet);
+                }
             }
         }
 
