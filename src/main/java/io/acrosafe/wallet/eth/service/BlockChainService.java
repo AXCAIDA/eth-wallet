@@ -26,6 +26,9 @@ package io.acrosafe.wallet.eth.service;
 import java.math.BigInteger;
 import java.util.List;
 
+import io.acrosafe.wallet.eth.contract.InternalAddress;
+import io.acrosafe.wallet.eth.domain.AddressRecord;
+import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,9 +61,54 @@ public class BlockChainService
     @Autowired
     private WalletRecordRepository walletRecordRepository;
 
+    @Autowired
+    private AddressRecordRepository addressRecordRepository;
+
     public EthGetBalance getEnterpriseAccountBalance(String address)
     {
         return blockChainNetwork.getETHBalance(address);
+    }
+
+    @Async
+    public synchronized void deployAddressContract(String addressId, Credentials credentials, String ownerAccountAddress,
+                                                   String walletId) throws ContractCreationException
+    {
+        ContractGasProvider contractGasProvider =
+                new StaticGasProvider(BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
+
+        try
+        {
+            InternalAddress contract = InternalAddress.deploy(this.blockChainNetwork.getWeb3j(), credentials, contractGasProvider).send();
+            contract.changeParent(ownerAccountAddress).send();
+            if (contract.isValid())
+            {
+                AddressRecord record = this.addressRecordRepository.findById(addressId).orElse(null);
+                if (record != null)
+                {
+                    final String contractAddress = contract.getContractAddress();
+                    record.setAddress(contractAddress);
+                    this.addressRecordRepository.save(record);
+
+                    logger.info(
+                            "address {} has been deployed to blockchain and persisted into DB. contract address = {}, owner account address = {}",
+                            addressId, contractAddress, ownerAccountAddress);
+                }
+                else
+                {
+                    // this is almost impossible
+                    logger.warn("failed to find address {} in DB.", addressId);
+                }
+            }
+            else
+            {
+                throw new ContractCreationException("address contract is not valid.");
+            }
+        }
+        catch (Throwable t)
+        {
+            throw new ContractCreationException("failed to deploy address sub-contract on blockchain.");
+        }
+
     }
 
     @Async
@@ -83,8 +131,8 @@ public class BlockChainService
                     record.setAddress(contractAddress);
                     this.walletRecordRepository.save(record);
 
+                    multisigWallet.setReady(true);
                     this.walletCacheService.addWalletToCache(walletId, multisigWallet);
-                    this.walletCacheService.updateWalletStatus(walletId, true);
                     logger.info("wallet {} has been deployed to blockchain and persisted into DB. contract address = {}",
                             walletId, contractAddress);
                 }
