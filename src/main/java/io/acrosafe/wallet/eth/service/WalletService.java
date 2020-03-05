@@ -31,9 +31,6 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import io.acrosafe.wallet.core.eth.Token;
-import io.acrosafe.wallet.eth.domain.TransactionRecord;
-import io.acrosafe.wallet.eth.repository.TransactionRecordRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,15 +51,18 @@ import io.acrosafe.wallet.core.eth.exception.AccountNotFoundException;
 import io.acrosafe.wallet.core.eth.exception.ContractCreationException;
 import io.acrosafe.wallet.core.eth.exception.CryptoException;
 import io.acrosafe.wallet.core.eth.exception.InvalidCredentialException;
+import io.acrosafe.wallet.core.eth.exception.TokenNotSupportedException;
 import io.acrosafe.wallet.core.eth.exception.WalletNotFoundException;
 import io.acrosafe.wallet.eth.config.ApplicationProperties;
 import io.acrosafe.wallet.eth.domain.AddressRecord;
+import io.acrosafe.wallet.eth.domain.TransactionRecord;
 import io.acrosafe.wallet.eth.domain.WalletRecord;
 import io.acrosafe.wallet.eth.exception.InvalidCoinSymbolException;
 import io.acrosafe.wallet.eth.exception.InvalidEnterpriseAccountException;
 import io.acrosafe.wallet.eth.exception.InvalidPassphraseException;
 import io.acrosafe.wallet.eth.exception.InvalidWalletNameException;
 import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
+import io.acrosafe.wallet.eth.repository.TransactionRecordRepository;
 import io.acrosafe.wallet.eth.repository.WalletRecordRepository;
 
 @Service
@@ -219,13 +219,22 @@ public class WalletService
         return this.blockChainService.getBalances(wallet.getAddress(), this.walletCacheService.getTokens());
     }
 
-    public List<TransactionRecord> getTransactions(Token token, String walletId, int pageId, int size)
-            throws WalletNotFoundException
+    public List<TransactionRecord> getTransactions(String symbol, String walletId, int pageId, int size)
+            throws WalletNotFoundException, TokenNotSupportedException
     {
         ETHWallet wallet = this.walletCacheService.getWallet(walletId);
 
+        String tokenSymbol = null;
+        if (symbol.equalsIgnoreCase(ETH_SYMBOL))
+        {
+            tokenSymbol = ETH_SYMBOL;
+        }
+        else
+        {
+            tokenSymbol = this.walletCacheService.getToken(symbol).getSymbol();
+        }
         Pageable pageable = PageRequest.of(pageId, size, Sort.by(Sort.Direction.ASC, "CreatedDate"));
-        List<TransactionRecord> records = this.transactionRecordRepository.findAllByWalletIdAndToken(pageable, walletId, token);
+        List<TransactionRecord> records = this.transactionRecordRepository.findAllByWalletIdAndToken(pageable, walletId, tokenSymbol);
 
         return records;
     }
