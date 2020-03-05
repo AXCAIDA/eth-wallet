@@ -30,9 +30,6 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import io.acrosafe.wallet.core.eth.exception.WalletNotFoundException;
-import io.acrosafe.wallet.eth.domain.AddressRecord;
-import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +47,15 @@ import io.acrosafe.wallet.core.eth.exception.AccountNotFoundException;
 import io.acrosafe.wallet.core.eth.exception.ContractCreationException;
 import io.acrosafe.wallet.core.eth.exception.CryptoException;
 import io.acrosafe.wallet.core.eth.exception.InvalidCredentialException;
+import io.acrosafe.wallet.core.eth.exception.WalletNotFoundException;
 import io.acrosafe.wallet.eth.config.ApplicationProperties;
+import io.acrosafe.wallet.eth.domain.AddressRecord;
 import io.acrosafe.wallet.eth.domain.WalletRecord;
 import io.acrosafe.wallet.eth.exception.InvalidCoinSymbolException;
 import io.acrosafe.wallet.eth.exception.InvalidEnterpriseAccountException;
 import io.acrosafe.wallet.eth.exception.InvalidPassphraseException;
 import io.acrosafe.wallet.eth.exception.InvalidWalletNameException;
+import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
 import io.acrosafe.wallet.eth.repository.WalletRecordRepository;
 
 @Service
@@ -92,13 +92,10 @@ public class WalletService
     @PostConstruct
     public void initialize()
     {
-        Map<String, BigInteger> map = this.blockChainService.getBalances("0xd2597e8c683a526a39116e7496a2220712115154", this.walletCacheService.getTokens());
-        map.forEach((k, v) -> System.out.println((k + ":" + v)));
     }
 
     @Transactional
-    public String createAddress(String walletId)
-            throws WalletNotFoundException, ContractCreationException
+    public String createAddress(String walletId) throws WalletNotFoundException, ContractCreationException
     {
         final ETHWallet wallet = this.walletCacheService.getWallet(walletId);
 
@@ -112,7 +109,7 @@ public class WalletService
         logger.info("new address record {} is created.", id);
         this.blockChainService.deployAddressContract(id,
                 wallet.getEnterpriseAccount().getCredentials(this.applicationProperties.getPassphrase()),
-                wallet.getOwnerAccount().getAddress(), walletId);
+                wallet.getOwnerAccount().getAddress());
 
         return id;
     }
@@ -179,7 +176,7 @@ public class WalletService
         ETHAccount backupAccount =
                 new ETHAccount(encryptedBackupSeed, spec, salt, this.applicationProperties.getTestnet(), walletPassphrase);
 
-        ETHWallet wallet = new ETHWallet(enterpriseAccount, signerAccount, backupAccount);
+        ETHWallet wallet = new ETHWallet(id, enterpriseAccount, signerAccount, backupAccount);
         logger.info("multisig wallet {} is created. addresses = {}", id, String.join(",", wallet.getSigningKeys()));
 
         WalletRecord walletRecord = new WalletRecord();
@@ -204,9 +201,11 @@ public class WalletService
         return walletRecord;
     }
 
-    public Map<String, BigInteger> getBalances(String walletId) throws WalletNotFoundException {
+    public Map<String, BigInteger> getBalances(String walletId) throws WalletNotFoundException
+    {
         final ETHWallet wallet = this.walletCacheService.getWallet(walletId);
 
         return this.blockChainService.getBalances(wallet.getAddress(), this.walletCacheService.getTokens());
     }
+
 }

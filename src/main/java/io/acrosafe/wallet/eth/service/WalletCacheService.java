@@ -114,13 +114,12 @@ public class WalletCacheService
 
     public List<Token> getTokens()
     {
-        return new ArrayList(tokens.values());
+        return new ArrayList<>(tokens.values());
     }
 
-    public void updateWalletStatus(String walletId, boolean isReady) throws WalletNotFoundException
+    public List<ETHWallet> getWallets()
     {
-        ETHWallet wallet = getWallet(walletId);
-        wallet.setReady(isReady);
+        return new ArrayList<>(wallets.values());
     }
 
     private void restoreTokens()
@@ -164,7 +163,7 @@ public class WalletCacheService
                 ETHAccount enterpriseAccount =
                         this.enterpriseAccountCacheService.getEnterpriseAccount(walletRecord.getEnterpriseAccountId());
 
-                ETHWallet wallet = new ETHWallet(enterpriseAccount, signerAccount, backupSignerAccount);
+                ETHWallet wallet = new ETHWallet(walletRecord.getId(), enterpriseAccount, signerAccount, backupSignerAccount);
 
                 String contractAddress = walletRecord.getAddress();
                 if (!StringUtils.isEmpty(contractAddress))
