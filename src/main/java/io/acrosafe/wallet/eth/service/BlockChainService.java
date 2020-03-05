@@ -35,8 +35,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
-import org.web3j.tx.gas.ContractGasProvider;
-import org.web3j.tx.gas.StaticGasProvider;
 
 import io.acrosafe.wallet.core.eth.BlockChainNetwork;
 import io.acrosafe.wallet.core.eth.ETHWallet;
@@ -76,16 +74,13 @@ public class BlockChainService
     }
 
     @Async
-    public synchronized void deployAddressContract(String addressId, Credentials credentials, String ownerAccountAddress,
-            String walletId) throws ContractCreationException
+    public synchronized void deployAddressContract(String addressId, Credentials credentials, String ownerAccountAddress)
+            throws ContractCreationException
     {
-        // TODO: remove when gas/limit model is done.
-        ContractGasProvider contractGasProvider =
-                new StaticGasProvider(BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
-
         try
         {
-            String contractAddress = this.blockChainNetwork.deployAddressContract(credentials, BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
+            String contractAddress = this.blockChainNetwork.deployAddressContract(ownerAccountAddress, credentials,
+                    BigInteger.valueOf(12_000_000_000L), BigInteger.valueOf(2300000));
             if (!StringUtils.isEmpty(contractAddress))
             {
                 AddressRecord record = this.addressRecordRepository.findById(addressId).orElse(null);
