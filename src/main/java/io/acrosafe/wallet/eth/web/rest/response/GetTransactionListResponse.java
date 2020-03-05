@@ -21,18 +21,55 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.acrosafe.wallet.eth.repository;
+package io.acrosafe.wallet.eth.web.rest.response;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import io.acrosafe.wallet.eth.domain.TransactionRecord;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public interface TransactionRecordRepository extends JpaRepository<TransactionRecord, Long>
+/**
+ * This class represents a list of transactions.
+ *
+ */
+public class GetTransactionListResponse extends Response
 {
-    Optional<TransactionRecord> findFirstByTransactionId(String transactionId);
+    @JsonProperty("coin")
+    private String coin;
 
-    List<TransactionRecord> findAllByWalletIdAndToken(Pageable pageable, String walletId, String token);
+    @JsonProperty("size")
+    private Integer size;
+
+    @JsonProperty("transactions")
+    private List<GetTransactionResponse> transactions;
+
+    public List<GetTransactionResponse> getTransactions()
+    {
+        return transactions;
+    }
+
+    public void setTransactions(List<GetTransactionResponse> transactions)
+    {
+        this.transactions = transactions;
+    }
+
+    public void addTransaction(GetTransactionResponse output)
+    {
+        if (transactions == null)
+        {
+            transactions = new ArrayList<>();
+        }
+
+        transactions.add(output);
+    }
+
+    public Integer getSize()
+    {
+        return size;
+    }
+
+    public void setSize(Integer size)
+    {
+        this.size = size;
+    }
 }

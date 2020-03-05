@@ -23,6 +23,8 @@
  */
 package io.acrosafe.wallet.eth.web.rest;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,12 +36,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.web3j.utils.Convert;
 
+import io.acrosafe.wallet.core.eth.TransactionType;
 import io.acrosafe.wallet.core.eth.exception.AccountNotFoundException;
 import io.acrosafe.wallet.core.eth.exception.ContractCreationException;
 import io.acrosafe.wallet.core.eth.exception.CryptoException;
 import io.acrosafe.wallet.core.eth.exception.InvalidCredentialException;
+import io.acrosafe.wallet.core.eth.exception.TokenNotSupportedException;
 import io.acrosafe.wallet.core.eth.exception.WalletNotFoundException;
+import io.acrosafe.wallet.eth.domain.TransactionRecord;
 import io.acrosafe.wallet.eth.domain.WalletRecord;
 import io.acrosafe.wallet.eth.exception.InvalidCoinSymbolException;
 import io.acrosafe.wallet.eth.exception.InvalidEnterpriseAccountException;
@@ -49,10 +56,12 @@ import io.acrosafe.wallet.eth.service.WalletService;
 import io.acrosafe.wallet.eth.web.rest.request.CreateWalletRequest;
 import io.acrosafe.wallet.eth.web.rest.response.CreateWalletResponse;
 import io.acrosafe.wallet.eth.web.rest.response.GetAddressResponse;
+import io.acrosafe.wallet.eth.web.rest.response.GetTransactionListResponse;
+import io.acrosafe.wallet.eth.web.rest.response.GetTransactionResponse;
 import io.acrosafe.wallet.eth.web.rest.response.Result;
 
 @Controller
-@RequestMapping("/api/v1/eth/wallet")
+@RequestMapping("/api/v1")
 public class WalletResources
 {
     // Logger
@@ -61,7 +70,7 @@ public class WalletResources
     @Autowired
     private WalletService service;
 
-    @GetMapping("/{walletId}/address")
+    @GetMapping("/eth/wallet/{walletId}/address")
     public ResponseEntity<GetAddressResponse> getWalletAddress(@PathVariable String walletId)
     {
         GetAddressResponse response = new GetAddressResponse();
@@ -94,7 +103,7 @@ public class WalletResources
         }
     }
 
-    @PostMapping("/new")
+    @PostMapping("/eth/wallet/new")
     public ResponseEntity<CreateWalletResponse> createWallet(@RequestBody CreateWalletRequest request)
     {
         CreateWalletResponse response = new CreateWalletResponse();
@@ -144,6 +153,66 @@ public class WalletResources
             response.setResultCode(Result.INVALID_COIN_SYMBOL.getCode());
             response.setResult(Result.INVALID_COIN_SYMBOL);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+        catch (Throwable t)
+        {
+            logger.error("failed to create account.", t);
+            response.setResultCode(Result.UNKNOWN_ERROR.getCode());
+            response.setResult(Result.UNKNOWN_ERROR);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/{symbol}/wallet/{walletId}/transaction/all")
+    public ResponseEntity<GetTransactionListResponse> getTransactions(@PathVariable String symbol, @PathVariable String walletId,
+            @RequestParam(required = true, defaultValue = "0") int pageId,
+            @RequestParam(required = false, defaultValue = "100") int size)
+    {
+        GetTransactionListResponse response = new GetTransactionListResponse();
+        try
+        {
+            List<TransactionRecord> transactionRecords = this.service.getTransactions(symbol, walletId, pageId, size);
+            if (transactionRecords != null && transactionRecords.size() != 0)
+            {
+                for (TransactionRecord transactionRecord : transactionRecords)
+                {
+                    GetTransactionResponse getTransactionOutputResponse = new GetTransactionResponse();
+                    getTransactionOutputResponse.setCreatedDate(transactionRecord.getCreatedDate());
+                    getTransactionOutputResponse.setFee(transactionRecord.getFee().toString());
+                    getTransactionOutputResponse.setStatus(transactionRecord.getStatus().getStatus());
+                    getTransactionOutputResponse.setTransactionId(transactionRecord.getTransactionId());
+                    String amount = transactionRecord.getAmount().toString();
+                    getTransactionOutputResponse.setAmountInWei(amount);
+                    getTransactionOutputResponse.setAmount(Convert.fromWei(amount, Convert.Unit.ETHER).toString());
+                    getTransactionOutputResponse.setWalletId(walletId);
+                    if (transactionRecord.getTransactionType() == TransactionType.DEPOSIT)
+                    {
+                        getTransactionOutputResponse.setType(TransactionType.DEPOSIT);
+                    }
+                    else
+                    {
+                        getTransactionOutputResponse.setType(TransactionType.WITHDRAWAL);
+                    }
+
+                    response.addTransaction(getTransactionOutputResponse);
+                }
+
+                response.setSize(transactionRecords.size());
+            }
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        catch (WalletNotFoundException e)
+        {
+            response.setResultCode(Result.WALLET_NOT_FOUND.getCode());
+            response.setResult(Result.WALLET_NOT_FOUND);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+        catch (TokenNotSupportedException e)
+        {
+            response.setResultCode(Result.TOKEN_NOT_SUPPORTED.getCode());
+            response.setResult(Result.TOKEN_NOT_SUPPORTED);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         catch (Throwable t)
         {
