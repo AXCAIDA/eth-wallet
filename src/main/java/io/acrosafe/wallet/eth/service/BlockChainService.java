@@ -24,6 +24,7 @@
 package io.acrosafe.wallet.eth.service;
 
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -35,14 +36,23 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.EthTransaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import io.acrosafe.wallet.core.eth.BlockChainNetwork;
 import io.acrosafe.wallet.core.eth.ETHWallet;
+import io.acrosafe.wallet.core.eth.IDGenerator;
 import io.acrosafe.wallet.core.eth.Token;
+import io.acrosafe.wallet.core.eth.TransactionStatus;
+import io.acrosafe.wallet.core.eth.TransactionType;
+import io.acrosafe.wallet.core.eth.TransactionUtils;
 import io.acrosafe.wallet.core.eth.exception.ContractCreationException;
 import io.acrosafe.wallet.eth.domain.AddressRecord;
+import io.acrosafe.wallet.eth.domain.TransactionRecord;
 import io.acrosafe.wallet.eth.domain.WalletRecord;
 import io.acrosafe.wallet.eth.repository.AddressRecordRepository;
+import io.acrosafe.wallet.eth.repository.TransactionRecordRepository;
 import io.acrosafe.wallet.eth.repository.WalletRecordRepository;
 
 @Service
@@ -63,6 +73,9 @@ public class BlockChainService
     @Autowired
     private AddressRecordRepository addressRecordRepository;
 
+    @Autowired
+    private TransactionRecordRepository transactionRecordRepository;
+
     public EthGetBalance getEnterpriseAccountBalance(String address)
     {
         return blockChainNetwork.getETHBalance(address);
@@ -71,6 +84,65 @@ public class BlockChainService
     public synchronized Map<String, BigInteger> getBalances(String walletAddress, List<Token> tokens)
     {
         return blockChainNetwork.getBalance(walletAddress, tokens);
+    }
+
+    public synchronized void subscribe(String address, String walletId)
+    {
+        this.blockChainNetwork.getETHFilter(address).subscribe(log -> {
+            final String hash = log.getTransactionHash();
+
+            try
+            {
+                EthTransaction transaction = this.blockChainNetwork.getTransactionByHash(hash);
+                EthGetTransactionReceipt receipt = this.blockChainNetwork.getTransactionReceiptByHash(hash);
+                TransactionReceipt transactionReceipt = receipt.getTransactionReceipt().orElse(null);
+                TransactionStatus status = TransactionUtils.getTransactionStatus(transactionReceipt);
+
+                TransactionRecord existingTransactionRecord =
+                        this.transactionRecordRepository.findFirstByTransactionId(hash).orElse(null);
+                if (existingTransactionRecord == null)
+                {
+                    TransactionRecord transactionRecord = new TransactionRecord();
+                    transactionRecord.setId(IDGenerator.randomUUID().toString());
+                    transactionRecord.setStatus(status);
+                    transactionRecord.setAmount(transaction.getResult().getValue());
+                    transactionRecord.setCreatedDate(Instant.now());
+                    transactionRecord.setFee(BigInteger.ZERO);
+                    transactionRecord.setLastModifiedDate(Instant.now());
+                    transactionRecord.setTransactionId(hash);
+                    transactionRecord.setTransactionType(TransactionType.DEPOSIT);
+                    transactionRecord.setWalletId(walletId);
+                    transactionRecord.setToken("ETH");
+                    transactionRecord.setDestination(address);
+
+                    this.transactionRecordRepository.save(transactionRecord);
+                    logger.info("found new deposite {} for address {}. value = {}, status = {}", hash, address,
+                            transaction.getResult().getValue(), status);
+                }
+                else
+                {
+                    if (existingTransactionRecord.getStatus() != TransactionStatus.CONFIRMED)
+                    {
+                        existingTransactionRecord.setStatus(status);
+                        this.transactionRecordRepository.save(existingTransactionRecord);
+                        logger.info("updated existing transaction status. hash = {}, address = {}, status = {}", hash, address,
+                                status);
+                    }
+                    else
+                    {
+                        logger.info("found existing deposit record. hash = {}, address = {}, status = {}, value = {}", hash,
+                                address, status, existingTransactionRecord.getAmount());
+                    }
+                }
+            }
+            catch (Throwable t)
+            {
+                // we have to let it go
+                logger.warn("failed to add listener to address {}", address, t);
+            }
+
+        });
+
     }
 
     @Async
@@ -88,6 +160,8 @@ public class BlockChainService
                 {
                     record.setAddress(contractAddress);
                     this.addressRecordRepository.save(record);
+
+                    subscribe(contractAddress, record.getWalletId());
 
                     logger.info(
                             "address {} has been deployed to blockchain and persisted into DB. contract address = {}, owner account address = {}",

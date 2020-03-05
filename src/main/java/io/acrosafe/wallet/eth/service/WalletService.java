@@ -26,14 +26,21 @@ package io.acrosafe.wallet.eth.service;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import io.acrosafe.wallet.core.eth.Token;
+import io.acrosafe.wallet.eth.domain.TransactionRecord;
+import io.acrosafe.wallet.eth.repository.TransactionRecordRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,11 +94,15 @@ public class WalletService
     @Autowired
     private AddressRecordRepository addressRecordRepository;
 
+    @Autowired
+    private TransactionRecordRepository transactionRecordRepository;
+
     private boolean isReady;
 
     @PostConstruct
     public void initialize()
     {
+        addBlockChainListener();
     }
 
     @Transactional
@@ -208,4 +219,44 @@ public class WalletService
         return this.blockChainService.getBalances(wallet.getAddress(), this.walletCacheService.getTokens());
     }
 
+    public List<TransactionRecord> getTransactions(Token token, String walletId, int pageId, int size)
+            throws WalletNotFoundException
+    {
+        ETHWallet wallet = this.walletCacheService.getWallet(walletId);
+
+        Pageable pageable = PageRequest.of(pageId, size, Sort.by(Sort.Direction.ASC, "CreatedDate"));
+        List<TransactionRecord> records = this.transactionRecordRepository.findAllByWalletIdAndToken(pageable, walletId, token);
+
+        return records;
+    }
+
+    private void addBlockChainListener()
+    {
+        List<AddressRecord> addressRecords = this.addressRecordRepository.findAll();
+        if (addressRecords != null && addressRecords.size() != 0)
+        {
+            for (AddressRecord addressRecord : addressRecords)
+            {
+                String address = addressRecord.getAddress();
+                if (address != null)
+                {
+                    logger.info("retoring transactions for address {}", addressRecord.getAddress());
+                    try
+                    {
+                        final String walletId = addressRecord.getWalletId();
+                        this.blockChainService.subscribe(address, walletId);
+                    }
+                    catch (Throwable t)
+                    {
+                        // we will let it continue.
+                        logger.error("failed to get deposit history for address {}", address, t);
+                    }
+                }
+                else
+                {
+                    logger.info("address record {} doesn't have valid address.", address);
+                }
+            }
+        }
+    }
 }
