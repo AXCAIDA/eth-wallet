@@ -1,4 +1,4 @@
-# eth-wallet
+# eth-wallet (In Progress)
 Spring Boot based 2-of-3 multisig wallet implementation for Ether. Now 35 kind of ERC20 tokens are supported. If you find any problem, please open an issue.
 
 # Wallet Smart Contract
